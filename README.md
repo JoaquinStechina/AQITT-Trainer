@@ -1,0 +1,137 @@
+# All Quiet in the Trenches – Trainer (single player)
+
+An external trainer for **All Quiet in the Trenches** that does **not** need BepInEx and does not modify any game file.
+`AQTrainer.exe` injects a small agent (`AQTAgent.dll`) into the running game's memory. The agent uses the game's own API
+(`GameValueManager`, `SavedCharacterGameValue`, `AttributeManager`, …), so there are no memory addresses that break with every patch.
+Everything disappears when you close the game.
+
+Built for Unity 2022.3 / Mono. Single-player only.
+
+## Usage
+1. Start the game (reaching the main menu is enough).
+2. Run `AQTrainer.exe` (double click). It should print **"Inyectado OK"** (injected OK). The console messages are in Spanish.
+3. Go back to the game window (click it or Alt+Tab). The trainer menu appears.
+4. **F10** or **Insert** shows/hides the menu. **Alt+1..9** toggles your favorite cheats.
+
+The menu is available in **English, Español, Français, Português, Русский and Deutsch** (Settings tab).
+
+## Features
+
+### Cheats tab
+Cheats are applied every 0.3 s to *your* soldiers (your troop plus your side during a mission), never to the enemy.
+Each checkbox has a line below it explaining exactly what it touches. "Mission" = the game resets the value every mission;
+"campaign" = it carries over between missions. Cheats tagged *mission* only take effect inside a mission and are greyed out otherwise.
+
+**Equipment**
+- Infinite ammo, bandages, hand grenades and smoke grenades. *Infinite bandages* only keeps the stock full; whether the treatment
+  succeeds depends on *Actions always succeed*.
+
+**Body**
+- **No hunger** (campaign): gives every character the `CharacterRations_High` ration (the ration group replaces Pitiful/Meager/Standard),
+  removes the trench-hunger rations (`CharacterTrenchProvision_None*`) and reduced rations (`IndividualRations_Less`), fills the company
+  (`Provision`) and trench camp (`TrenchProvision`) provisions and resets the bad-rations turn counters (`TurnCounter_Rations_None/Low`).
+  Note: this also fills the company's food stock.
+- **Good health (heals)**: sets `HealthImpairment`, `BleedingProcess` and `BleedingIntensityValue` to 0; removes wounds (all `Injury_*`),
+  bleeding, diseases (dysentery, flu, trench fever, gas, tuberculosis) and **all `Complication_*`** (skin rash, cough, nausea, pain, insomnia,
+  fever, shortness of breath, swelling, gangrene, pneumonia…), and sets the health state to "Healthy". It also lowers the chance of dysentery,
+  trench foot and hospital complications to the minimum. Dead characters are not touched. It heals what they *already* have; it does not prevent new wounds.
+- **Invulnerable soldiers (prevents)**: uses the game's own `InvincibleWound` attribute; prevents *new* wounds, does not heal existing ones.
+- **No fatigue**: `PhysicalExertion` (mission) and `Exhaustion` (campaign) always 0. In the game, exhaustion grows with every action depending on
+  stress and exertion, and at exertion 60 or more the soldier becomes breathless (`Breathless`).
+- **Good physical condition**: `Fitness` at maximum (20). More fitness means less exertion and less bleeding. Almost redundant with
+  *No fatigue* and *Good health*.
+
+**Mind**
+- **Happy (morale and optimism)**: `Optimism` at maximum (+4) and `Morale` at its own cap (20 if it had none).
+- **No stress**: `Stress` at 0 (mission). Stress feeds exhaustion and also enters the ammunition each action consumes.
+- **Fervent**: `FervorValue` at maximum (100) and the **Fervor** state applied (mission). Fervor normally rises with combat successes;
+  with the state applied every action costs 20 fewer points of physical exertion.
+- **Soldiers never surrender**: the game's `InvincibleSurrender` attribute.
+
+**Circumstances and relationships**
+- **Good circumstances**: removes the bad ones from the *Circumstances* category (grief `Grief_*`, negative events, bad news, bad moods —
+  Dejected, Upset, Shaken, Resentful, Nauseated, Disappointed—, "Daunted", "Work-crazed", lice) and applies the good ones (good weather,
+  positive events, Determined/Grateful/Relieved moods, "Motivated", good news). These are tags on the soldier's sheet that the game also manages
+  by itself, so if one comes back the trainer fixes it on the next cycle. It does not touch the morale numbers: that is *Happy*.
+- **They trust you**: `Trust` at maximum, `Fear` (fear of the commander) at 0 and the *Relation: Comradely* state. This is the only place `Fear` is touched.
+- **Hospital, quartermaster and village**: `HospitalTrust`, `QuartermasterTrust` and `VillageTrust` at maximum (99).
+  These are company-wide values, not per-soldier.
+- **Rivals become friends**: rivalries between your soldiers turn into friendships (the relationship is symmetric).
+
+**Actions → Actions always succeed.** The game has no global dice roll: every mission action compares a percentage against
+`Random.Range(0,100)`, and that percentage comes from a per-soldier "efficiency" value. This cheat adds a fixed amount to those efficiencies
+**for your soldiers only** (the enemy is unchanged) and subtracts it when turned off: shooting (base/cover/flanking/overwatch/suppression),
+grenades (direct hit), melee, barbed wire and clearing a jammed rifle (both use `DexterityBasedEfficiency`), first aid and looting (larger amount).
+Not covered: story events/dialogues with their own rolls, the "loot corpses" check (depends on the *Indifferent* personality) and movement
+(movement efficiency also changes speed, so it is left alone).
+
+**Quality of life**
+- Quick profiles (*Survival*, *Comfortable*, *Everything*, *None*) and **3 custom slots** (save/load).
+- Collapsible sections with "N/M active", search box, "N active of M" counter, *Collapse/Expand all*.
+- **Favorites** section on top and **Alt+1..9** hotkeys for favorite cheats.
+- Active cheats are remembered and re-enabled the next time the trainer is injected (can be turned off).
+- Small "AQT: N active [F10]" indicator while the menu is hidden (can be turned off).
+- A scope line ("N soldiers", "mission in progress" / "no mission") and a status message saying how many soldiers each cheat reaches.
+
+### Values tab
+Global game values (resources, trust, chances, counters…) with **readable names** (the game only has internal names; hover a name to see it),
+grouped into collapsible sections, with a search box. Editable values have -10 / -1 / +1 / +10 buttons, a field for an exact number
+(**Enter** or *Set*) and **Min / Max** buttons (when the value has a cap). Calculated (read-only) values — most of them — are hidden;
+a checkbox shows them. Every row has a **Fav** toggle.
+
+### Characters tab
+Pick a soldier from your troop (e.g. Elmar Framm, Georg Ackermann, Carr Mencke, Peter Linnecke) and **add or remove** attributes from the
+**Skills** (Veteran, Sniper, Medic, Strong, Weak…), **Status** (wounds, complications, stress, exhaustion, fitness…), **Circumstances**
+(weather, mood, grief, news…) and **Relation** (to you, hospital, quartermaster, village) categories, with the game's own icon for each attribute.
+- A **"Has:"** line lists everything the selected soldier has.
+- Search box and an "only the ones it has" filter.
+- **"Apply to the WHOLE troop"** adds/removes the attribute for every soldier at once.
+- **Undo** (up to 30 changes; it also restores the opposite attributes that were removed).
+- A **Favorites** category with the attributes you marked with *Fav*.
+
+Notes: Strong/Weak, Quick/Slow, Dextrous/Clumsy and KeenPerception/PoorPerception are opposites and replace each other.
+Items marked "(auto)" (stress, exhaustion, fitness…) are levels the game recalculates by itself when the underlying number changes, so they can
+change back; removing a wound does not by itself change the soldier's health state (wounded/healthy).
+
+### Settings tab
+Trainer language, window opacity, font size, and options (remember active cheats, HUD indicator, hotkeys, attribute icons).
+The window can be resized by dragging its bottom-right corner (`::`); position and size are remembered.
+Settings are stored in `%APPDATA%\AQTrainer\settings.ini` (plain text; safe to edit with the game closed).
+
+**Unload trainer** removes the agent from the game and reverts the invulnerability attributes.
+
+## Changelog highlights
+- **v6** – new interface: profiles, favorites, search, collapsible sections, hotkeys, HUD indicator, scope/status messages, resizable window,
+  opacity and font-size sliders, friendly value names, "apply to whole troop", undo, attribute icons, persistent settings, and six languages.
+- **v5.2** – fixed the IMGUI error *"Getting control N's position in a group with only M controls when doing Repaint"* (the layout changed
+  its number of controls mid-pass; everything that affects the control count is now frozen on the Layout event).
+- **v5.1** – *Good health* now removes **all** `Complication_*` (before it missed everything except fever and shortness of breath, e.g. *Skin rash*).
+- **v5** – removed duplicated/overlapping cheats: *Max morale* + *Happy* merged; *Happy* no longer sets `Fear` (only *They trust you* does);
+  *No physical exertion* + *No exhaustion* merged into *No fatigue*; clearer names and descriptions; corrected *Fervent* description.
+
+## Honest technical notes
+- The game could not be run in the development environment: everything is compiled against the real game DLLs (the compiler verifies the
+  API signatures), but injection and the menu are **not fully tested**. If something fails, check the log `%TEMP%\AQTrainer.log` and open an issue with its content.
+- The state cheats (morale, stress, fatigue, wellbeing) are based on reading how the game uses those values and attributes (exact names taken
+  from the game data). If one behaves oddly, turn it off. If a name does not exist in your game version, the trainer logs it
+  (`Bienestar: no se encontro ...`) and skips that part.
+- Back up your saves before trying it. If you save with *Invulnerable* active, the attribute stays in that save until you turn it off.
+  The same applies to *Actions always succeed* (the boost stays added to the soldiers until you turn it off or unload the trainer).
+- Windows Defender / SmartScreen may flag `AQTrainer.exe`: this is a typical false positive for any injector (it uses
+  `CreateRemoteThread`/`WriteProcessMemory`). The full source is in this repository so you can review or rebuild it.
+- Intended for single-player campaigns only.
+
+## Building
+`build.bat` rebuilds both binaries with the .NET Framework compiler that ships with Windows (C# 5):
+
+```
+build.bat "H:\SteamLibrary\steamapps\common\All Quiet in the Trenches"
+```
+
+## Files
+| File | What it is |
+|---|---|
+| `AQTrainer.exe` | Injector (console). SHA-256: `c123cec0710a57c33a133d36681069676f0b4d70ba7ac38b8d462c778b26d87f` |
+| `AQTAgent.dll` | Agent that runs inside the game. SHA-256: `68403ac64ceeb247efbd5f229fc0c65bb172c6aaa4e8297779c7ccb634c0062c` |
+| `agent/*.cs` | Agent source (menu, settings, cheats, wellbeing, characters, values, translations) |
+| `injector/*.cs` | Injector source (adapted from SharpMonoInjector, MIT license in `LICENSE-SharpMonoInjector.txt`) |
