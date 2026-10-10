@@ -4,8 +4,8 @@ using System.Text;
 
 namespace AQT
 {
-    // Nombres legibles y grupos para los valores globales del juego (en el juego solo tienen un nombre interno,
-    // p. ej. "HospitalTrust"). Los que no estan en la tabla se "humanizan" (Turn_Counter -> "Turn Counter").
+    // Readable names and groups for the game's global values (in the game they only have an internal name,
+    // e.g. "HospitalTrust"). Names not in the table are "humanized" (Turn_Counter -> "Turn Counter").
     internal static class ValueNames
     {
         public const int GroupCount = 6;
@@ -90,7 +90,7 @@ namespace AQT
             return Humanize(name);
         }
 
-        // Texto en ambos idiomas, para que el buscador encuentre "provisiones" y "provisions".
+        // Text in both languages, so the search finds both "provisiones" and "provisions".
         public static string AllNames(string name)
         {
             Pair p;

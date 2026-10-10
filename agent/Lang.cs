@@ -1,8 +1,8 @@
 ﻿namespace AQT
 {
-    // Idioma del trainer (menu, descripciones y mensajes). Los nombres de habilidades / estados de los personajes
-    // vienen del propio juego y siguen el idioma que tengas elegido en el juego.
-    // L.T(es, en): el texto en espanol e ingles va en el codigo; los otros idiomas se buscan en Translations por el texto en ingles.
+    // Trainer language (menu, descriptions and messages). Skill / status names of the characters
+    // come from the game itself and follow the language chosen in the game.
+    // L.T(es, en): the Spanish and English text live in the code; other languages are looked up in Translations by the English text.
     internal static class L
     {
         public const int Es = 0;
@@ -13,7 +13,7 @@
         public const int De = 5;
         public const int Count = 6;
 
-        // codigos que se guardan en settings.ini y nombres propios de cada idioma
+        // codes stored in settings.ini and the native name of each language
         public static readonly string[] Codes = new string[] { "es", "en", "fr", "pt", "ru", "de" };
         public static readonly string[] Names = new string[] { "Español", "English", "Français", "Português", "Русский", "Deutsch" };
 

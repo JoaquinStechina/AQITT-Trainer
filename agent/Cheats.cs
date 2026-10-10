@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace AQT
 {
-    // Un truco de la pestana "Trucos": identificador estable (se guarda en los ajustes), seccion, textos en ambos idiomas.
+    // A cheat of the "Cheats" tab: stable identifier (stored in the settings), section, texts in both languages.
     internal sealed class Cheat
     {
         public string Id;
         public int Section;
         public string TitleEs, TitleEn, DescEs, DescEn;
-        public bool MissionOnly;   // sirve sobre todo dentro de una mision
+        public bool MissionOnly;   // mostly useful inside a mission
         public bool On;
 
         public string Title { get { return L.T(TitleEs, TitleEn); } }
@@ -19,11 +19,11 @@ namespace AQT
     internal sealed class Preset
     {
         public string NameEs, NameEn;
-        public string[] Ids;       // null = todos
+        public string[] Ids;       // null = all
         public string Name { get { return L.T(NameEs, NameEn); } }
     }
 
-    // Tabla de trucos. Las ids son las que usa TrainerBehaviour.Tick() para saber que aplicar.
+    // Cheat table. The ids are the ones TrainerBehaviour.Tick() uses to know what to apply.
     internal static class Cheats
     {
         public const int SectionCount = 5;
@@ -169,7 +169,7 @@ namespace AQT
             return r;
         }
 
-        // Deja activos exactamente los trucos de la lista (null = todos).
+        // Leaves exactly the cheats in the list active (null = all).
         public static void SetActive(IEnumerable<string> ids)
         {
             HashSet<string> set = ids == null ? null : new HashSet<string>(ids);

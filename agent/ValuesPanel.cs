@@ -5,17 +5,17 @@ using UnityEngine;
 
 namespace AQT
 {
-    // Pestana "Valores": valores globales de la partida (recursos, confianza, contadores...) con nombres legibles,
-    // agrupados en secciones plegables, con favoritos, botones Min/Max y "Enter" para fijar un numero.
+    // "Values" tab: global game values (resources, trust, counters...) with readable names,
+    // grouped into collapsible sections, with favorites, Min/Max buttons and "Enter" to set a number.
     internal sealed class ValuesPanel
     {
         private sealed class Row
         {
             public string Name;
             public string Friendly;
-            public string Search;       // nombres en ambos idiomas, en minusculas
+            public string Search;       // names in both languages, lowercase
             public int Group;
-            public SavedGameValue Saved;   // null = valor calculado (solo lectura)
+            public SavedGameValue Saved;   // null = calculated value (read-only)
             public int Current;
             public bool HasMin, HasMax;
             public int Min, Max;
@@ -48,7 +48,7 @@ namespace AQT
             _cfg = cfg;
         }
 
-        // ---- datos (se llama desde Update, nunca desde OnGUI) ------------------------------------------------
+        // ---- data (called from Update, never from OnGUI) ------------------------------------------------
 
         public void Refresh(float dt, bool force)
         {
@@ -84,7 +84,7 @@ namespace AQT
             _rows.Sort(delegate (Row a, Row b) { return string.Compare(a.Friendly, b.Friendly, StringComparison.OrdinalIgnoreCase); });
         }
 
-        // ---- copia estable para IMGUI (se toma en el evento Layout) ----------------------------------------------
+        // ---- stable copy for IMGUI (taken on the Layout event) ----------------------------------------------
 
         private void Snapshot()
         {
@@ -117,7 +117,7 @@ namespace AQT
                 if (groups[g].Rows.Count > 0) _view.Add(groups[g]);
         }
 
-        // ---- interfaz ------------------------------------------------------------------------------------
+        // ---- interface ------------------------------------------------------------------------------------
 
         public void Draw()
         {
@@ -177,7 +177,7 @@ namespace AQT
                 string txt;
                 if (!_edit.TryGetValue(r.Name, out txt)) txt = "";
                 string field = "val_" + r.Name;
-                // "Enter" se detecta ANTES del TextField (el campo puede consumir el evento) y solo si ese campo tiene el foco.
+                // "Enter" is detected BEFORE the TextField (the field may consume the event) and only if that field has focus.
                 bool enter = Event.current.type == EventType.KeyDown &&
                              (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter) &&
                              GUI.GetNameOfFocusedControl() == field;
@@ -214,7 +214,7 @@ namespace AQT
                 int applied = r.Saved.SetValue(newValue);
                 r.Current = applied;
                 Status = r.Friendly + " = " + applied;
-                Log.Info("Valor " + r.Name + " -> " + applied);
+                Log.Info("Value " + r.Name + " -> " + applied);
             }
             catch (Exception e)
             {

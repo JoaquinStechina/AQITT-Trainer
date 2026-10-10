@@ -7,19 +7,19 @@ using UnityEngine;
 
 namespace AQT
 {
-    // Ajustes del trainer, guardados en %APPDATA%\AQTrainer\settings.ini (texto plano "clave=valor").
-    // Se cargan al inyectar y se guardan solos poco despues de cada cambio.
+    // Trainer settings, stored in %APPDATA%\AQTrainer\settings.ini (plain text "key=value").
+    // Loaded on injection and saved automatically shortly after every change.
     internal sealed class Settings
     {
         public const int ProfileSlots = 3;
 
-        public int Language;                       // indice de L.Codes: 0 es, 1 en, 2 fr, 3 pt, 4 ru, 5 de
-        public bool RememberCheats = true;         // volver a activar al inyectar lo que estaba activo
-        public bool ShowHud = true;                // indicador chico cuando el menu esta oculto
-        public bool Hotkeys = true;                // Alt+1..9 para los trucos favoritos
-        public bool ShowIcons = true;              // iconos de los atributos en la pestana Personajes
-        public float Alpha = 1f;                   // transparencia de la ventana
-        public float FontScale = 1f;               // tamano de letra
+        public int Language;                       // index into L.Codes: 0 es, 1 en, 2 fr, 3 pt, 4 ru, 5 de
+        public bool RememberCheats = true;         // re-enable on injection what was active
+        public bool ShowHud = true;                // small indicator while the menu is hidden
+        public bool Hotkeys = true;                // Alt+1..9 for favorite cheats
+        public bool ShowIcons = true;              // attribute icons in the Characters tab
+        public float Alpha = 1f;                   // window opacity
+        public float FontScale = 1f;               // font size
         public float WinX = -1f, WinY = -1f, WinW = 620f, WinH = 700f;
         public int Tab;
 
@@ -66,13 +66,13 @@ namespace AQT
             _changedAt = Time.unscaledTime;
         }
 
-        // Guarda si hubo cambios hace mas de un segundo (para no escribir el archivo en cada frame).
+        // Saves if there were changes more than a second ago (so the file is not written every frame).
         public void SaveIfDue()
         {
             if (Dirty && Time.unscaledTime - _changedAt > 1f) Save();
         }
 
-        // ------------------------------------------------------------------ cargar / guardar
+        // ------------------------------------------------------------------ load / save
 
         public static Settings Load()
         {
@@ -91,7 +91,7 @@ namespace AQT
                     s.Apply(key, val);
                 }
                 s.Sanitize();
-                Log.Info("Ajustes cargados de " + FilePath);
+                Log.Info("Settings loaded from " + FilePath);
             }
             catch (Exception e)
             {
@@ -149,7 +149,7 @@ namespace AQT
                 if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("# All Quiet in the Trenches - Trainer (se genera solo; se puede editar con el juego cerrado)");
+                sb.AppendLine("# All Quiet in the Trenches - Trainer (generated automatically; safe to edit while the game is closed)");
                 sb.AppendLine("lang=" + L.Codes[Math.Max(0, Math.Min(Language, L.Count - 1))]);
                 sb.AppendLine("remember=" + (RememberCheats ? "1" : "0"));
                 sb.AppendLine("hud=" + (ShowHud ? "1" : "0"));
@@ -182,7 +182,7 @@ namespace AQT
             }
         }
 
-        // ------------------------------------------------------------------ utilidades
+        // ------------------------------------------------------------------ utilities
 
         private static string F(float v)
         {
@@ -215,7 +215,7 @@ namespace AQT
             return r;
         }
 
-        // Agrega o quita un nombre de una lista de favoritos. Devuelve el nuevo estado.
+        // Adds or removes a name from a favorites list. Returns the new state.
         public bool SetListed(List<string> list, string name, bool on)
         {
             bool has = list.Contains(name);

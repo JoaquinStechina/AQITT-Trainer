@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace AQT
 {
-    // Utilidades de interfaz (IMGUI): skin propia con tamano de letra ajustable (no toca la skin del juego),
-    // estilos compartidos, secciones plegables y la casilla "Fav".
+    // UI utilities (IMGUI): own skin with adjustable font size (does not touch the game's skin),
+    // shared styles, collapsible sections and the "Fav" toggle.
     //
-    // REGLA IMGUI que respeta todo el menu: en una misma pasada (Layout -> evento -> Repaint) hay que dibujar exactamente
-    // los mismos controles. Por eso lo que decide cuantos controles hay (secciones plegadas, buscadores, filtros, pestana)
-    // se copia en el evento Layout y el resto de la pasada usa esa copia.
+    // IMGUI RULE followed by the whole menu: within one pass (Layout -> event -> Repaint) exactly
+    // the same controls must be drawn. So whatever decides how many controls exist (collapsed sections, search boxes, filters, tab)
+    // is copied on the Layout event and the rest of the pass uses that copy.
     internal sealed class Ui
     {
         public static readonly Color Green = new Color(0.55f, 1f, 0.55f);
@@ -25,7 +25,7 @@ namespace AQT
         private bool _prevEnabled;
         private readonly HashSet<string> _vCollapsed = new HashSet<string>();
 
-        // Se llama al principio de cada OnGUI: pone la skin propia y la transparencia.
+        // Called at the start of every OnGUI: sets the own skin and the opacity.
         public void Begin(Settings cfg)
         {
             _prevSkin = GUI.skin;
@@ -76,7 +76,7 @@ namespace AQT
             }
             else
             {
-                _skin = src;   // sin copia: se usa la del juego (el tamano de letra no se podra cambiar)
+                _skin = src;   // no copy: the game's skin is used (the font size cannot be changed)
             }
             if (old != null && old != _skin && old != src) UnityEngine.Object.Destroy(old);
 
@@ -114,7 +114,7 @@ namespace AQT
             Hud.wordWrap = false;
         }
 
-        // ------------------------------------------------------------------ secciones plegables
+        // ------------------------------------------------------------------ collapsible sections
 
         public void SnapshotCollapsed(Settings cfg)
         {
@@ -127,7 +127,7 @@ namespace AQT
             return _vCollapsed.Contains(id);
         }
 
-        // Cabecera clickeable. Devuelve true si la seccion se debe mostrar desplegada (segun la copia del Layout).
+        // Clickable header. Returns true if the section must be shown expanded (according to the Layout copy).
         public bool FoldHeader(Settings cfg, string id, string title, bool allowCollapse)
         {
             bool collapsed = allowCollapse && _vCollapsed.Contains(id);
@@ -139,7 +139,7 @@ namespace AQT
             return !collapsed;
         }
 
-        // ------------------------------------------------------------------ casilla "Fav"
+        // ------------------------------------------------------------------ "Fav" toggle
 
         public bool FavToggle(bool on)
         {

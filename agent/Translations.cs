@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace AQT
 {
-    // Traducciones al frances, portugues, ruso y aleman. La clave es el texto en INGLES que se pasa a L.T(es, en);
-    // si falta una clave se muestra el ingles. Orden de los valores: fr, pt, ru, de.
+    // French, Portuguese, Russian and German translations. The key is the ENGLISH text passed to L.T(es, en);
+    // if a key is missing, English is shown. Order of the values: fr, pt, ru, de.
     internal static class Translations
     {
         private static readonly Dictionary<string, string[]> Map = new Dictionary<string, string[]>();

@@ -34,7 +34,7 @@ namespace AQT
         private string _status = "";
         private string _lastError = "";
 
-        // estado de los trucos
+        // cheat state
         private bool[] _prevOn;
         private bool _appliedInvWound, _appliedInvSurrender;
         private float _timer;
@@ -44,15 +44,15 @@ namespace AQT
         private bool _langDirty;
         private string _search = "";
 
-        // copia estable para IMGUI (se toma en el evento Layout de cada pasada; ver Ui.cs)
+        // stable copy for IMGUI (taken on the Layout event of each pass; see Ui.cs)
         private int _drawTab;
         private string _vSearch = "";
         private readonly List<SectionView> _sections = new List<SectionView>();
 
-        // arrastre del borde para cambiar el tamano de la ventana
+        // corner drag to resize the window
         private Vector2 _grab;
 
-        // ------------------------------------------------------------------ ciclo de vida
+        // ------------------------------------------------------------------ lifecycle
 
         private void Awake()
         {
@@ -64,7 +64,7 @@ namespace AQT
                 _values.Init(_ui, _cfg);
                 _characters.Init(_ui, _cfg);
 
-                // trucos que estaban activos la ultima vez
+                // cheats that were active last time
                 if (_cfg.RememberCheats) Cheats.SetActive(_cfg.ActiveCheats);
                 else Cheats.SetActive(new string[0]);
                 _prevOn = new bool[Cheats.All.Count];
@@ -140,7 +140,7 @@ namespace AQT
         private void OnDestroy()
         {
             try { RestoreAttributes(); } catch (Exception e) { Log.Error("OnDestroy", e); }
-            try { if (_cfg != null && _cfg.Dirty) _cfg.Save(); } catch (Exception e) { Log.Error("OnDestroy (ajustes)", e); }
+            try { if (_cfg != null && _cfg.Dirty) _cfg.Save(); } catch (Exception e) { Log.Error("OnDestroy (settings)", e); }
         }
 
         private void ReportError(string where, Exception e)
@@ -154,7 +154,7 @@ namespace AQT
             }
         }
 
-        // ------------------------------------------------------------------ trucos: estado
+        // ------------------------------------------------------------------ cheats: state
 
         private static bool On(string id)
         {
@@ -162,8 +162,8 @@ namespace AQT
             return c != null && c.On;
         }
 
-        // Detecta cambios en las casillas (desde el menu, un perfil o una tecla rapida), los guarda en los ajustes
-        // y, si cambio uno solo, avisa que paso y a cuantos soldados alcanza.
+        // Detects changes in the checkboxes (from the menu, a profile or a hotkey), saves them in the settings
+        // and, if only one changed, reports what happened and how many soldiers it reaches.
         private void SyncCheats(bool quiet)
         {
             if (_prevOn == null || _prevOn.Length != Cheats.All.Count) return;
@@ -204,7 +204,7 @@ namespace AQT
             _scope = cm == null ? 0 : Game.MyCharacters(cm, mm).Count;
         }
 
-        // Alt + 1..9 activan / desactivan los trucos marcados como favoritos (en el orden en que se marcaron).
+        // Alt + 1..9 toggle the cheats marked as favorites (in the order they were marked).
         private void HandleHotkeys()
         {
             if (!_cfg.Hotkeys || _cfg.FavCheats.Count == 0) return;
@@ -242,9 +242,9 @@ namespace AQT
             _status = L.T("Perfil ", "Profile ") + (k + 1) + L.T(" cargado: ", " loaded: ") + Cheats.ActiveCount() + L.T(" trucos activos.", " cheats active.");
         }
 
-        // ------------------------------------------------------------------ trucos: aplicacion
+        // ------------------------------------------------------------------ cheats: application
 
-        // Ejecuta un truco aislado: si uno falla, los demas siguen funcionando y el error queda en el log.
+        // Runs a cheat in isolation: if one fails, the others keep working and the error is logged.
         private void Safe(string name, Action action)
         {
             try { action(); }
@@ -276,8 +276,8 @@ namespace AQT
             if (On("noStress")) Game.ToBest(mm.StressGameValue, chars, false, 0);
             if (On("noTired"))
             {
-                Game.ToBest(mm.PhysicalExertionGameValue, chars, false, 0);   // de la mision (el juego lo reinicia en cada mision)
-                Game.ToBest(mm.ExhaustionGameValue, chars, false, 0);         // de la campana (se acumula entre misiones)
+                Game.ToBest(mm.PhysicalExertionGameValue, chars, false, 0);   // mission value (the game resets it every mission)
+                Game.ToBest(mm.ExhaustionGameValue, chars, false, 0);         // campaign value (accumulates between missions)
             }
 
             AttributeManager am = cm.AttributeManager;
@@ -287,11 +287,11 @@ namespace AQT
             if (invSurrender) { Game.EnsureAttribute(am, chars, mm.InvincibleSurrender, true); _appliedInvSurrender = true; }
             else if (_appliedInvSurrender) { Game.EnsureAttribute(am, chars, mm.InvincibleSurrender, false); _appliedInvSurrender = false; }
 
-            // Acciones siempre exitosas (eficiencias de combate / primeros auxilios / saqueo...)
-            if (success) Safe("Acciones exitosas", delegate { _boost.Apply(mm, chars); });
-            else if (_boost.Active) Safe("Acciones exitosas (revertir)", delegate { _boost.Revert(); });
+            // Actions always succeed (combat efficiencies / first aid / looting...)
+            if (success) Safe("Actions always succeed", delegate { _boost.Apply(mm, chars); });
+            else if (_boost.Active) Safe("Actions always succeed (revert)", delegate { _boost.Revert(); });
 
-            // Bienestar (hambre / animo / salud / fervor / forma fisica / circunstancias / relaciones)
+            // Wellbeing (hunger / mood / health / fervor / fitness / circumstances / relationships)
             bool noHunger = On("noHunger"), happy = On("happy"), health = On("health"), fervor = On("fervor"), fitness = On("fitness");
             bool circ = On("circ"), relPlayer = On("relPlayer"), relGroups = On("relGroups"), relFriends = On("relFriends");
             if (noHunger || happy || health || fervor || fitness || circ || relPlayer || relGroups || relFriends)
@@ -299,27 +299,27 @@ namespace AQT
                 MissionImpactManager mi = Game.Find<MissionImpactManager>();
                 GameValueManager gvm = Game.Find<GameValueManager>();
                 bool ready = false;
-                Safe("Bienestar", delegate { ready = _wellbeing.Bind(gvm, am, mi, mm); });
+                Safe("Wellbeing", delegate { ready = _wellbeing.Bind(gvm, am, mi, mm); });
                 if (ready)
                 {
-                    if (noHunger) Safe("Sin hambre", delegate { _wellbeing.NoHunger(chars); });
-                    if (happy) Safe("Felices", delegate { _wellbeing.Happy(chars, mm); });
-                    if (health) Safe("Buena salud", delegate { _wellbeing.Health(chars, mm); });
-                    if (fervor) Safe("Exaltados", delegate { _wellbeing.Fervor(chars, mm); });
-                    if (fitness) Safe("Condicion fisica", delegate { _wellbeing.Fitness(chars, mm); });
-                    if (circ) Safe("Circunstancias", delegate { _wellbeing.Circumstances(chars); });
-                    if (relPlayer) Safe("Relaciones (soldados)", delegate { _wellbeing.Relations(chars); });
-                    if (relGroups) Safe("Relaciones (hospital/intendente/aldea)", delegate { _wellbeing.GroupTrust(); });
-                    if (relFriends) Safe("Relaciones (amistades)", delegate { _wellbeing.Friends(chars, cm); });
+                    if (noHunger) Safe("No hunger", delegate { _wellbeing.NoHunger(chars); });
+                    if (happy) Safe("Happy", delegate { _wellbeing.Happy(chars, mm); });
+                    if (health) Safe("Good health", delegate { _wellbeing.Health(chars, mm); });
+                    if (fervor) Safe("Fervent", delegate { _wellbeing.Fervor(chars, mm); });
+                    if (fitness) Safe("Good physical condition", delegate { _wellbeing.Fitness(chars, mm); });
+                    if (circ) Safe("Good circumstances", delegate { _wellbeing.Circumstances(chars); });
+                    if (relPlayer) Safe("Relationships (soldiers)", delegate { _wellbeing.Relations(chars); });
+                    if (relGroups) Safe("Relationships (hospital/quartermaster/village)", delegate { _wellbeing.GroupTrust(); });
+                    if (relFriends) Safe("Relationships (friendships)", delegate { _wellbeing.Friends(chars, cm); });
                 }
             }
         }
 
-        // Quita los atributos de invencibilidad (al descargar el trainer) para no dejarlos en la partida.
+        // Removes the invincibility attributes (when unloading the trainer) so they are not left in the game.
         private void RestoreAttributes()
         {
-            // Devuelve las eficiencias que se sumaron para las acciones exitosas
-            try { _boost.Revert(); } catch (Exception e) { Log.Error("Revert acciones", e); }
+            // Gives back the efficiencies that were added for the always-succeed actions
+            try { _boost.Revert(); } catch (Exception e) { Log.Error("Revert actions", e); }
 
             if (!_appliedInvWound && !_appliedInvSurrender) return;
             CharacterManager cm = Game.Find<CharacterManager>();
@@ -332,7 +332,7 @@ namespace AQT
             _appliedInvSurrender = false;
         }
 
-        // ------------------------------------------------------------------ ventana: posicion / tamano
+        // ------------------------------------------------------------------ window: position / size
 
         private void ClampWindow()
         {
@@ -342,7 +342,7 @@ namespace AQT
             _window.y = Mathf.Clamp(_window.y, 0f, sh - 30f);
         }
 
-        // Guarda posicion, tamano y pestana cuando cambian (el archivo se escribe con retraso, ver Settings.SaveIfDue).
+        // Saves position, size and tab when they change (the file is written with a delay, see Settings.SaveIfDue).
         private void SyncWindowSettings()
         {
             bool changed = false;
@@ -354,7 +354,7 @@ namespace AQT
             if (changed) _cfg.Touch();
         }
 
-        // ------------------------------------------------------------------ interfaz (IMGUI)
+        // ------------------------------------------------------------------ interface (IMGUI)
 
         private void OnGUI()
         {
@@ -385,7 +385,7 @@ namespace AQT
             }
         }
 
-        // Indicador chico para saber que el trainer sigue activo con el menu oculto.
+        // Small indicator to show the trainer is still active while the menu is hidden.
         private void DrawHud()
         {
             if (Event.current.type != EventType.Repaint) return;
@@ -451,7 +451,7 @@ namespace AQT
             }
             GUILayout.EndHorizontal();
 
-            // contexto: a cuantos soldados llega lo que hagas y si hay una mision en curso
+            // context: how many soldiers whatever you do reaches, and whether a mission is in progress
             GUILayout.Label(L.T("Alcance: ", "Scope: ") + _scope + L.T(" soldados", " soldiers") + "   |   " +
                             (_inMission ? L.T("misión en curso", "mission in progress") : L.T("fuera de misión (campaña)", "no mission (campaign)")),
                             _ui.Hint);
@@ -463,8 +463,8 @@ namespace AQT
             else DrawSettings();
             GUILayout.EndScrollView();
 
-            // Descripcion / nombre interno del elemento bajo el mouse (Valores y Personajes): etiqueta SIEMPRE presente en
-            // esas pestanas (con o sin texto) para que no cambie la cantidad de controles segun donde este el mouse.
+            // Description / internal name of the element under the mouse (Values and Characters): label ALWAYS present in
+            // those tabs (with or without text) so the number of controls does not change depending on where the mouse is.
             if (_drawTab == 1 || _drawTab == 2)
                 GUILayout.Label(GUI.tooltip, _ui.Hint, GUILayout.Height(Mathf.Max(36f, _ui.Px * 3.6f)));
 
@@ -480,7 +480,7 @@ namespace AQT
             GUI.DragWindow(new Rect(0, 0, 10000, 22));
         }
 
-        // Esquina inferior derecha: arrastrarla cambia el tamano de la ventana.
+        // Bottom-right corner: dragging it resizes the window.
         private void DoResizeHandle()
         {
             Rect handle = new Rect(_winW - 24f, _winH - 22f, 20f, 18f);
@@ -517,7 +517,7 @@ namespace AQT
             }
         }
 
-        // ------------------------------------------------------------------ pestana Trucos
+        // ------------------------------------------------------------------ Cheats tab
 
         private void DrawCheats()
         {
@@ -527,7 +527,7 @@ namespace AQT
                 "They apply to your soldiers (your troop and your side in a mission), never to the enemy. \"Mission\" = the game resets it every mission; \"campaign\" = it carries over between missions. " +
                 "Items tagged \"mission\" only take effect inside a mission."), _ui.Hint);
 
-            // perfiles rapidos
+            // quick profiles
             GUILayout.BeginHorizontal();
             GUILayout.Label(L.T("Perfiles rápidos:", "Quick profiles:"), GUILayout.Width(Mathf.Max(100f, _ui.Px * 9f)));
             for (int i = 0; i < Cheats.Presets.Length; i++)
@@ -536,7 +536,7 @@ namespace AQT
             }
             GUILayout.EndHorizontal();
 
-            // perfiles propios (3 ranuras)
+            // custom profiles (3 slots)
             GUILayout.BeginHorizontal();
             GUILayout.Label(L.T("Mis perfiles:", "My profiles:"), GUILayout.Width(Mathf.Max(100f, _ui.Px * 9f)));
             for (int k = 0; k < Settings.ProfileSlots; k++)
@@ -555,7 +555,7 @@ namespace AQT
             }
             GUILayout.EndHorizontal();
 
-            // buscador + contador
+            // search box + counter
             GUILayout.BeginHorizontal();
             GUILayout.Label(L.T("Buscar:", "Search:"), GUILayout.Width(Mathf.Max(55f, _ui.Px * 5f)));
             _search = GUILayout.TextField(_search);
@@ -635,7 +635,7 @@ namespace AQT
             }
         }
 
-        // ------------------------------------------------------------------ pestana Ajustes
+        // ------------------------------------------------------------------ Settings tab
 
         private bool Setting(bool value, string text)
         {
@@ -696,7 +696,7 @@ namespace AQT
 
             GUILayout.Label(L.T("Teclas rápidas", "Hotkeys"), _ui.Header);
             GUILayout.Label("F10 / Insert: " + L.T("mostrar u ocultar el menú", "show or hide the menu"), _ui.Hint);
-            // una sola etiqueta (con saltos de linea) para que la cantidad de controles no dependa de cuantos favoritos haya
+            // a single label (with line breaks) so the number of controls does not depend on how many favorites exist
             string keys;
             if (_cfg.FavCheats.Count == 0)
             {
@@ -722,7 +722,7 @@ namespace AQT
             GUILayout.Label(L.T("Registro de errores: ", "Error log: ") + Log.Path, _ui.Hint);
         }
 
-        // ------------------------------------------------------------------ descarga
+        // ------------------------------------------------------------------ unload
 
         private void Unload()
         {
@@ -732,7 +732,7 @@ namespace AQT
                 if (_cfg != null) _cfg.Save();
                 AppDomain.CurrentDomain.SetData(Loader.DomainKey, null);
                 Loader.ResetForReload();
-                Log.Info("Trainer descargado desde el menu.");
+                Log.Info("Trainer unloaded from the menu.");
             }
             catch (Exception e)
             {

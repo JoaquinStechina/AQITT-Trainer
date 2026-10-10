@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace AQT
 {
-    // Acceso a la API del propio juego (Assembly-CSharp). Los "Manager" del juego son
-    // ScriptableObjects (AlienCore.Manager : GameScriptableObject), asi que se buscan con
-    // Resources.FindObjectsOfTypeAll y se prefiere el que tenga IsEnabled == true.
+    // Access to the game's own API (Assembly-CSharp). The game's "Manager" classes are
+    // ScriptableObjects (AlienCore.Manager : GameScriptableObject), so they are found with
+    // Resources.FindObjectsOfTypeAll, preferring the one with IsEnabled == true.
     internal static class Game
     {
         public static T Find<T>() where T : ScriptableObject
@@ -25,10 +25,10 @@ namespace AQT
             return fallback;
         }
 
-        // Soldados "propios": la tropa del jugador (en tropa + reserva) y, durante una mision,
-        // todas las tropas de TU bando. OJO: MissionManager.OwnTroops cambia segun de quien sea
-        // el turno (en el turno enemigo "Own" son los enemigos), por eso NO se usa; se filtra
-        // AllTroops por el bando (IsEntente) de la tropa del jugador.
+        // "Own" soldiers: the player's troop (in troop + reserves) and, during a mission,
+        // all troops on YOUR side. NOTE: MissionManager.OwnTroops changes depending on whose
+        // turn it is (on the enemy turn "Own" means the enemies), so it is NOT used; AllTroops
+        // is filtered by the side (IsEntente) of the player's troop instead.
         public static List<Character> MyCharacters(CharacterManager cm, MissionManager mm)
         {
             HashSet<Character> set = new HashSet<Character>();
@@ -65,7 +65,7 @@ namespace AQT
             }
         }
 
-        // Recarga un consumible: si el valor tiene tope lo sube al tope; si no, a un valor alto.
+        // Refills a consumable: if the value has a cap it is raised to the cap; otherwise to a high value.
         public static int TopUp(SavedCharacterGameValue v, List<Character> chars)
         {
             if (v == null) return 0;
@@ -110,8 +110,8 @@ namespace AQT
                 SetAtMost(v, chars, v.UseMinValue ? v.MinValue : 0);
         }
 
-        // Agrega un atributo si el personaje no lo tiene (los de grupo reemplazan al anterior del grupo,
-        // lo resuelve el propio juego en AddCharacterAttributeData).
+        // Adds an attribute if the character does not have it (group attributes replace the previous one in the group,
+        // which the game itself resolves in AddCharacterAttributeData).
         public static bool AddAttribute(AttributeManager am, Character c, CharacterAttribute a)
         {
             if (am == null || c == null || a == null) return false;
@@ -120,7 +120,7 @@ namespace AQT
             return true;
         }
 
-        // Quita todas las instancias del atributo (algunos son apilables). Devuelve cuantas quito.
+        // Removes all instances of the attribute (some are stackable). Returns how many were removed.
         public static int RemoveAttribute(AttributeManager am, Character c, CharacterAttribute a)
         {
             if (am == null || c == null || a == null) return 0;
@@ -131,7 +131,7 @@ namespace AQT
             return copy.Count;
         }
 
-        // Pone o quita un atributo de personaje (p. ej. InvincibleWound).
+        // Sets or removes a character attribute (e.g. InvincibleWound).
         public static void EnsureAttribute(AttributeManager am, List<Character> chars, CharacterAttribute attr, bool want)
         {
             if (am == null || attr == null) return;

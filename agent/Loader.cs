@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace AQT
 {
-    // Punto de entrada: el inyector llama a AQT.Loader.Load() desde un hilo nativo
-    // (no el hilo principal de Unity). Por eso NO creamos objetos de Unity aqui:
-    // dejamos un gancho que se ejecuta en el hilo principal en cuanto el juego
-    // renderiza un frame (o cambia el foco de la ventana) y recien ahi creamos el trainer.
+    // Entry point: the injector calls AQT.Loader.Load() from a native thread
+    // (not Unity's main thread). That is why we do NOT create Unity objects here:
+    // we leave a hook that runs on the main thread as soon as the game
+    // renders a frame (or the window focus changes), and only then do we create the trainer.
     public static class Loader
     {
         internal const string DomainKey = "AQT.Trainer.Loaded";
@@ -19,11 +19,11 @@ namespace AQT
             {
                 if (AppDomain.CurrentDomain.GetData(DomainKey) != null)
                 {
-                    Log.Info("Ya estaba cargado; se ignora la segunda inyeccion.");
+                    Log.Info("Already loaded; ignoring the second injection.");
                     return;
                 }
                 AppDomain.CurrentDomain.SetData(DomainKey, "1");
-                Log.Info("Load() ejecutado. Esperando al hilo principal de Unity...");
+                Log.Info("Load() executed. Waiting for Unity's main thread...");
 
                 Application.onBeforeRender += OnMainThreadHook;
                 Application.focusChanged += OnFocusChanged;
@@ -35,7 +35,7 @@ namespace AQT
             }
         }
 
-        // Lo llama el menu al descargar el trainer, para permitir una nueva inyeccion.
+        // Called by the menu when unloading the trainer, to allow a new injection.
         internal static void ResetForReload()
         {
             lock (Gate) { _created = false; }
@@ -63,13 +63,13 @@ namespace AQT
                 UnityEngine.Object.DontDestroyOnLoad(go);
                 go.hideFlags = HideFlags.HideAndDontSave;
                 go.AddComponent<TrainerBehaviour>();
-                Log.Info("Trainer creado en el hilo principal. Menu: F10 o Insert.");
+                Log.Info("Trainer created on the main thread. Menu: F10 or Insert.");
             }
             catch (Exception e)
             {
                 Log.Error("Loader.OnMainThreadHook", e);
                 lock (Gate) { _created = false; }
-                // reintentar en el proximo frame
+                // retry on the next frame
                 Application.onBeforeRender += OnMainThreadHook;
                 Application.focusChanged += OnFocusChanged;
             }

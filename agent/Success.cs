@@ -5,23 +5,23 @@ using UnityEngine;
 
 namespace AQT
 {
-    // "Acciones siempre exitosas" para los soldados del jugador.
+    // "Actions always succeed" for the player's soldiers.
     //
-    // Como decide el juego (leido del IL de Assembly-CSharp): las acciones de mision no usan una tirada global sino
-    // valores de "eficiencia" por personaje (porcentajes, 0 = normal). Cada tirada es del estilo
-    //     chance = base * max(0, 1 + eficiencia/100)   y   exito si  chance > Random.Range(0, 100)
-    // Ejemplos reales:
-    //   - Cortar alambre de puas (MissionManager.DoRemoveObstacle): 70 * mod(DexterityBasedEfficiency) > Random(0,100)
-    //   - Arreglar fusil trabado (formula FixRifleJammingSuccessProbability): 60 * (1 + DexterityBasedEfficiency*0.01)
-    //   - Granada (MissionGrenadeManager.HandleGrenadeImpact): Random(50,150)*mod(ThrowGrenadeEfficiency+distancia) > 130 = impacto directo
-    //   - Disparo apuntado (MissionOverwatchManager.HandleAimedFire): 100*mod(BaseFireEfficiency)*mod(cobertura) > Random(0,100)
-    //   - Melee (MissionMeleeManager.EvaluateMeleeMatchWinner): Random(0.5V,V)*mod(MeleeEfficiency) del atacante vs. el del defensor
-    //   - Botiquin (DoFirstAid): cantidad tratada * (1 + FirstAidEfficiency*0.01)
-    //   - Saqueo (GetLootAmount): cantidad * mod(PerceptionBasedEfficiency)
-    // Subiendo esos valores SOLO en tus soldados, las tiradas pasan siempre y el enemigo queda igual.
+    // How the game decides (read from the IL of Assembly-CSharp): mission actions do not use a global roll but
+    // per-character "efficiency" values (percentages, 0 = normal). Each roll looks like
+    //     chance = base * max(0, 1 + efficiency/100)   and   success if  chance > Random.Range(0, 100)
+    // Real examples:
+    //   - Cutting barbed wire (MissionManager.DoRemoveObstacle): 70 * mod(DexterityBasedEfficiency) > Random(0,100)
+    //   - Clearing a jammed rifle (formula FixRifleJammingSuccessProbability): 60 * (1 + DexterityBasedEfficiency*0.01)
+    //   - Grenade (MissionGrenadeManager.HandleGrenadeImpact): Random(50,150)*mod(ThrowGrenadeEfficiency+distance) > 130 = direct hit
+    //   - Aimed fire (MissionOverwatchManager.HandleAimedFire): 100*mod(BaseFireEfficiency)*mod(cover) > Random(0,100)
+    //   - Melee (MissionMeleeManager.EvaluateMeleeMatchWinner): Random(0.5V,V)*mod(MeleeEfficiency) of the attacker vs. the defender's
+    //   - First aid (DoFirstAid): amount treated * (1 + FirstAidEfficiency*0.01)
+    //   - Looting (GetLootAmount): amount * mod(PerceptionBasedEfficiency)
+    // By raising those values ONLY on your soldiers, the rolls always pass and the enemy stays the same.
     //
-    // Para no dejar la partida "rota" se suma una cantidad fija (delta) y se la resta al desactivar; el juego sigue
-    // sumando/restando sus propios modificadores encima sin problema.
+    // To avoid leaving the game "broken" a fixed amount (delta) is added and subtracted again when turned off; the game keeps
+    // adding/subtracting its own modifiers on top without any problem.
     internal sealed class SuccessBoost
     {
         private sealed class Entry
@@ -31,7 +31,7 @@ namespace AQT
             public int Amount;
         }
 
-        // Lo que ya sumamos, por valor (si el MissionManager se recrea, el mismo valor no se cuenta dos veces).
+        // What we already added, per value (if the MissionManager is recreated, the same value is not counted twice).
         private sealed class Applied
         {
             public int Amount;
@@ -42,7 +42,7 @@ namespace AQT
         private readonly Dictionary<SavedCharacterGameValue, Applied> _boosted = new Dictionary<SavedCharacterGameValue, Applied>();
         private MissionManager _mm;
 
-        // true si hay soldados con la mejora puesta (hay algo que revertir al desactivar).
+        // true if there are soldiers with the boost applied (there is something to revert when turned off).
         public bool Active
         {
             get
@@ -74,7 +74,7 @@ namespace AQT
             SavedCharacterGameValue s = v as SavedCharacterGameValue;
             if (s == null)
             {
-                Log.Info("Acciones: '" + label + "' no es un valor editable (se omite).");
+                Log.Info("Actions: '" + label + "' is not an editable value (skipped).");
                 return;
             }
             Entry e = new Entry();
@@ -101,13 +101,13 @@ namespace AQT
                 }
                 HashSet<Character> set = applied.Chars;
 
-                int threshold = e.Amount - 90;   // el minimo del valor es -90: potenciado siempre queda >= Amount-90 (y los normales quedan por debajo)
+                int threshold = e.Amount - 90;   // the value's minimum is -90: a boosted one is always >= Amount-90 (and normal ones stay below)
                 for (int k = 0; k < chars.Count; k++)
                 {
                     Character c = chars[k];
                     if (e.Value.GetValue(c) >= threshold)
                     {
-                        set.Add(c);   // ya estaba potenciado (por nosotros antes, o viene de una partida guardada asi)
+                        set.Add(c);   // already boosted (by us earlier, or it comes from a save made that way)
                         continue;
                     }
                     e.Value.AddValue(c, e.Amount);
@@ -116,7 +116,7 @@ namespace AQT
             }
         }
 
-        // Resta lo que sumamos. Si el juego ya reseteo ese valor (queda bajo el umbral), no se toca.
+        // Subtracts what we added. If the game already reset that value (it is below the threshold), it is left alone.
         public void Revert()
         {
             int restored = 0;
@@ -137,7 +137,7 @@ namespace AQT
                 kv.Value.Chars.Clear();
             }
             _boosted.Clear();
-            if (restored > 0) Log.Info("Acciones: revertidos " + restored + " valores de eficiencia.");
+            if (restored > 0) Log.Info("Actions: reverted " + restored + " efficiency values.");
         }
     }
 }

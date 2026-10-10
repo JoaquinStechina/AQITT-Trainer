@@ -9,7 +9,7 @@ Built for Unity 2022.3 / Mono. Single-player only.
 
 ## Usage
 1. Start the game (reaching the main menu is enough).
-2. Run `AQTrainer.exe` (double click). It should print **"Inyectado OK"** (injected OK). The console messages are in Spanish.
+2. Run `AQTrainer.exe` (double click). It should print **"Injected OK"**.
 3. Go back to the game window (click it or Alt+Tab). The trainer menu appears.
 4. **F10** or **Insert** shows/hides the menu. **Alt+1..9** toggles your favorite cheats.
 
@@ -114,7 +114,7 @@ Settings are stored in `%APPDATA%\AQTrainer\settings.ini` (plain text; safe to e
   API signatures), but injection and the menu are **not fully tested**. If something fails, check the log `%TEMP%\AQTrainer.log` and open an issue with its content.
 - The state cheats (morale, stress, fatigue, wellbeing) are based on reading how the game uses those values and attributes (exact names taken
   from the game data). If one behaves oddly, turn it off. If a name does not exist in your game version, the trainer logs it
-  (`Bienestar: no se encontro ...`) and skips that part.
+  (`Wellbeing: could not find ...`) and skips that part.
 - Back up your saves before trying it. If you save with *Invulnerable* active, the attribute stays in that save until you turn it off.
   The same applies to *Actions always succeed* (the boost stays added to the soldiers until you turn it off or unload the trainer).
 - Windows Defender / SmartScreen may flag `AQTrainer.exe`: this is a typical false positive for any injector (it uses
@@ -131,7 +131,7 @@ build.bat "H:\SteamLibrary\steamapps\common\All Quiet in the Trenches"
 ## Files
 | File | What it is |
 |---|---|
-| `AQTrainer.exe` | Injector (console). SHA-256: `c123cec0710a57c33a133d36681069676f0b4d70ba7ac38b8d462c778b26d87f` |
-| `AQTAgent.dll` | Agent that runs inside the game. SHA-256: `68403ac64ceeb247efbd5f229fc0c65bb172c6aaa4e8297779c7ccb634c0062c` |
+| `AQTrainer.exe` | Injector (console). SHA-256: `ec1954fd243c43a7eb6daab7f09acfc9c95065e25225c87e52df495c66f0e75b` |
+| `AQTAgent.dll` | Agent that runs inside the game. SHA-256: `8d6aa2c141fe68386ddcd82f7384a341cfe856d1cbac72079b31d53ec0889382` |
 | `agent/*.cs` | Agent source (menu, settings, cheats, wellbeing, characters, values, translations) |
 | `injector/*.cs` | Injector source (adapted from SharpMonoInjector, MIT license in `LICENSE-SharpMonoInjector.txt`) |

@@ -3,7 +3,7 @@ using System.IO;
 
 namespace AQT
 {
-    // Log simple a %TEMP%\AQTrainer.log (seguro desde cualquier hilo).
+    // Simple log to %TEMP%\AQTrainer.log (safe from any thread).
     internal static class Log
     {
         private static readonly object Gate = new object();

@@ -5,17 +5,17 @@ using UnityEngine;
 
 namespace AQT
 {
-    // Trucos de "bienestar" de los personajes del jugador: hambre, animo (moral + optimismo), salud, fervor, forma fisica,
-    // circunstancias y relaciones.
+    // "Wellbeing" cheats for the player's characters: hunger, mood (morale + optimism), health, fervor, fitness,
+    // circumstances and relationships.
     //
-    // Todo se hace con la API del propio juego:
-    //  - valores por personaje (SavedCharacterGameValue): Optimism, Fear, HealthImpairment, BleedingProcess,
+    // Everything is done through the game's own API:
+    //  - per-character values (SavedCharacterGameValue): Optimism, Fear, HealthImpairment, BleedingProcess,
     //    BleedingIntensityValue, FervorValue, Fitness, Morale
-    //  - valores globales (SavedGameValue): Provision, TrenchProvision, TurnCounter_Rations_*
-    //  - atributos de personaje: CharacterRations_High (grupo CharacterRations), Health_Healthy (grupo HealthStatus),
-    //    Fervor, y los atributos de heridas/enfermedades que se quitan.
-    // Los valores y atributos se buscan por nombre una sola vez (se indexan los arreglos publicos de los managers),
-    // asi no dependemos de ninguna variable interna del juego ni de lo que pase si un nombre no existe.
+    //  - global values (SavedGameValue): Provision, TrenchProvision, TurnCounter_Rations_*
+    //  - character attributes: CharacterRations_High (group CharacterRations), Health_Healthy (group HealthStatus),
+    //    Fervor, and the wound/disease attributes that get removed.
+    // Values and attributes are looked up by name only once (the managers' public arrays are indexed),
+    // so we do not depend on any internal game variable, nor on what happens if a name does not exist.
     internal sealed class Wellbeing
     {
         private static readonly string[] SicknessNames = new string[]
@@ -29,7 +29,7 @@ namespace AQT
             "CharacterTrenchProvision_None", "CharacterTrenchProvision_None_DefenseMission", "IndividualRations_Less"
         };
 
-        // Circunstancias (categoria "Circumstances" del juego): las malas se quitan, las buenas se ponen.
+        // Circumstances (the game's "Circumstances" category): the bad ones are removed, the good ones applied.
         private static readonly string[] BadCircumstanceNames = new string[]
         {
             "Mood_Disappointed_Display", "Mood_Discordant_Display", "Mood_Disgruntled_Display", "Mood_Disgusted_Display",
@@ -62,9 +62,9 @@ namespace AQT
         private float _lastFriends = -99f;
         private bool _setsBuilt;
 
-        // ------------------------------------------------------------------ preparacion
+        // ------------------------------------------------------------------ setup
 
-        // Devuelve false si todavia no hay datos del juego cargados.
+        // Returns false if the game data is not loaded yet.
         public bool Bind(GameValueManager gvm, AttributeManager am, MissionImpactManager mi, MissionManager mm)
         {
             if (gvm != _gvm)
@@ -146,9 +146,9 @@ namespace AQT
             }
             if (_mm != null && _mm.IsBleedingCharacterAttribute != null) _badHealth.Add(_mm.IsBleedingCharacterAttribute);
 
-            // Todas las complicaciones del juego (Skin rash, tos, nauseas, dolor, insomnio, gangrena, neumonia, ...):
-            // el juego las lista junto a las heridas como "problemas de salud" y no estan en las listas de heridas.
-            // Se toman por prefijo para no depender de una lista fija ("ComplicationHospitalization" no entra: no lleva "_").
+            // All of the game's complications (Skin rash, cough, nausea, pain, insomnia, gangrene, pneumonia, ...):
+            // the game lists them next to wounds as "health problems" and they are not in the wound lists.
+            // They are taken by prefix so we do not depend on a fixed list ("ComplicationHospitalization" does not match: no "_").
             foreach (KeyValuePair<string, CharacterAttribute> kv in _attrs)
             {
                 if (kv.Value != null && kv.Key.StartsWith("Complication_", StringComparison.Ordinal))
@@ -175,7 +175,7 @@ namespace AQT
             }
 
             _setsBuilt = true;
-            Log.Info("Bienestar: " + _badHealth.Count + " atributos de salud y " + _badHunger.Count + " de hambre indexados.");
+            Log.Info("Wellbeing: indexed " + _badHealth.Count + " health attributes and " + _badHunger.Count + " hunger attributes.");
         }
 
         private static void AddAll(HashSet<CharacterAttribute> set, List<CharacterAttribute> src)
@@ -187,7 +187,7 @@ namespace AQT
 
         private void Warn(string what)
         {
-            if (_warned.Add(what)) Log.Info("Bienestar: no se encontro " + what + " (se omite esa parte).");
+            if (_warned.Add(what)) Log.Info("Wellbeing: could not find " + what + " (skipping that part).");
         }
 
         private SavedCharacterGameValue CV(string name)
@@ -214,7 +214,7 @@ namespace AQT
             return null;
         }
 
-        // ------------------------------------------------------------------ helpers de valores globales
+        // ------------------------------------------------------------------ global value helpers
 
         private static void GlobalAtLeast(SavedGameValue v, int fallback)
         {
@@ -229,7 +229,7 @@ namespace AQT
             if (v.GetValue() > target) v.SetValue(target);
         }
 
-        // Lleva un valor global a su minimo (o a "fallback" si no tiene minimo definido).
+        // Moves a global value to its minimum (or to "fallback" if it has no minimum defined).
         private static void GlobalToMin(SavedGameValue v, int fallback)
         {
             if (v == null) return;
@@ -250,12 +250,12 @@ namespace AQT
             return n;
         }
 
-        // ------------------------------------------------------------------ los trucos
+        // ------------------------------------------------------------------ the cheats
 
-        // Sin hambre: raciones al maximo para cada personaje y provisiones de la compania llenas.
+        // No hunger: rations at maximum for every character and company provisions full.
         public void NoHunger(List<Character> chars)
         {
-            // Provisiones de la compania y del campamento de trinchera: llenas, y contadores de raciones malas en 0.
+            // Company and trench-camp provisions: full, and bad-rations counters at 0.
             GlobalAtLeast(GV("Provision"), 144);
             GlobalAtLeast(GV("TrenchProvision"), 100);
             GlobalAtMost(GV("TurnCounter_Rations_None"), 0);
@@ -266,13 +266,13 @@ namespace AQT
             {
                 Character c = chars[i];
                 RemoveFrom(c, _badHunger);
-                // CharacterRations es un grupo: agregar "High" reemplaza None/Low/Standard.
+                // CharacterRations is a group: adding "High" replaces None/Low/Standard.
                 if (high != null) Game.AddAttribute(_am, c, high);
             }
         }
 
-        // Felices: optimismo y moral al maximo. (Antes habia ademas una casilla "Moral al maximo" aparte, que escribia
-        // el mismo valor, y esta tambien bajaba el miedo; el miedo al comandante ahora esta solo en Relations.)
+        // Happy: optimism and morale at maximum. (There used to be a separate "Max morale" checkbox that wrote
+        // the same value, and this one also lowered fear; fear of the commander is now only in Relations.)
         public void Happy(List<Character> chars, MissionManager mm)
         {
             SavedCharacterGameValue opt = CV("Optimism");
@@ -280,10 +280,10 @@ namespace AQT
             if (mm != null && mm.MoraleGameValue != null) Game.ToBest(mm.MoraleGameValue, chars, true, 20);
         }
 
-        // Buena salud: sin heridas, sangrado ni enfermedades, y estado de salud "sano".
+        // Good health: no wounds, bleeding or diseases, and the "healthy" health state.
         public void Health(List<Character> chars, MissionManager mm)
         {
-            // Probabilidades de enfermar (globales) y de complicaciones en el hospital (por soldado): al minimo.
+            // Chances of falling ill (global) and of hospital complications (per soldier): at the minimum.
             GlobalToMin(GV("Disease_Dysentery_Chance"), -10);
             GlobalToMin(GV("Injury_TrenchFoot_Chance"), -20);
             SavedCharacterGameValue complication = CV("HospitalComplicationChance");
@@ -303,15 +303,15 @@ namespace AQT
             for (int i = 0; i < chars.Count; i++)
             {
                 Character c = chars[i];
-                if (dead != null && _am.HasCharacterAttribute(c, dead)) continue;   // a los muertos no se los toca
+                if (dead != null && _am.HasCharacterAttribute(c, dead)) continue;   // dead characters are left alone
                 RemoveFrom(c, _badHealth);
-                // HealthStatus es un grupo: agregar "Healthy" reemplaza Impaired/RequiresTreatment/Critical.
+                // HealthStatus is a group: adding "Healthy" replaces Impaired/RequiresTreatment/Critical.
                 if (healthy != null) Game.AddAttribute(_am, c, healthy);
             }
         }
 
-        // Circunstancias buenas: quita las malas (duelo, malas noticias, mal humor, piojos...) y pone buen clima,
-        // buen humor, "Motivated" y "eventos positivos".
+        // Good circumstances: removes the bad ones (grief, bad news, bad mood, lice...) and applies good weather,
+        // good mood, "Motivated" and "positive events".
         public void Circumstances(List<Character> chars)
         {
             SavedCharacterGameValue lice = CV("Lice");
@@ -321,13 +321,13 @@ namespace AQT
             {
                 Character c = chars[i];
                 RemoveFrom(c, _badCirc);
-                // CharacterWeather y Circumstance_Good_Display son grupos: el nuevo reemplaza al anterior (p. ej. mal clima).
+                // CharacterWeather and Circumstance_Good_Display are groups: the new one replaces the previous one (e.g. bad weather).
                 for (int k = 0; k < _goodCirc.Count; k++)
                     Game.AddAttribute(_am, c, _goodCirc[k]);
             }
         }
 
-        // Relacion de los soldados con el jugador: confianza al maximo y sin miedo (de ahi sale "Relation: Comradely").
+        // Soldiers' relationship with the player: trust at maximum and no fear (this yields "Relation: Comradely").
         public void Relations(List<Character> chars)
         {
             SavedCharacterGameValue trust = CV("Trust");
@@ -338,13 +338,13 @@ namespace AQT
             CharacterAttribute standing = Attr("PlayerStanding_Comradely");
             if (standing != null)
             {
-                // PlayerStanding es un grupo: agregar "Comradely" reemplaza al nivel actual.
+                // PlayerStanding is a group: adding "Comradely" replaces the current level.
                 for (int i = 0; i < chars.Count; i++)
                     Game.AddAttribute(_am, chars[i], standing);
             }
         }
 
-        // Confianza global con el hospital, el intendente y la aldea (las "relaciones" que muestran los soldados).
+        // Global trust with the hospital, the quartermaster and the village (the "relations" soldiers display).
         public void GroupTrust()
         {
             GlobalAtLeast(GV("HospitalTrust"), 99);
@@ -352,11 +352,11 @@ namespace AQT
             GlobalAtLeast(GV("VillageTrust"), 99);
         }
 
-        // Rivalidades entre soldados del jugador: los rivales pasan a ser amigos (la relacion es simetrica).
+        // Rivalries between the player's soldiers: rivals become friends (the relationship is symmetric).
         public void Friends(List<Character> chars, CharacterManager cm)
         {
             if (cm == null) return;
-            if (Time.unscaledTime - _lastFriends < 2f) return;   // no hace falta revisarlo cada 0,3 s
+            if (Time.unscaledTime - _lastFriends < 2f) return;   // no need to check this every 0.3 s
             _lastFriends = Time.unscaledTime;
 
             HashSet<Character> mine = new HashSet<Character>(chars);
@@ -368,12 +368,12 @@ namespace AQT
                 {
                     if (!mine.Contains(rivals[k])) continue;
                     cm.SetCharacterRelation(chars[i], rivals[k], CharacterRelation.Friends);
-                    Log.Info("Rivales -> amigos: " + chars[i].Forename + " " + chars[i].Surname + " / " + rivals[k].Forename + " " + rivals[k].Surname);
+                    Log.Info("Rivals -> friends: " + chars[i].Forename + " " + chars[i].Surname + " / " + rivals[k].Forename + " " + rivals[k].Surname);
                 }
             }
         }
 
-        // Exaltados: fervor al maximo (y el estado "Fervor" puesto).
+        // Fervent: fervor at maximum (and the "Fervor" state applied).
         public void Fervor(List<Character> chars, MissionManager mm)
         {
             if (mm == null) return;
@@ -385,7 +385,7 @@ namespace AQT
             }
         }
 
-        // Buena condicion fisica: forma fisica (Fitness) al maximo. Mas forma fisica = menos esfuerzo y menos sangrado.
+        // Good physical condition: Fitness at maximum. More fitness = less exertion and less bleeding.
         public void Fitness(List<Character> chars, MissionManager mm)
         {
             if (mm == null || mm.FitnessGameValue == null) return;

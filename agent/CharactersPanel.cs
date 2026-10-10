@@ -5,17 +5,17 @@ using UnityEngine;
 
 namespace AQT
 {
-    // Pestana "Personajes": agregar / quitar atributos (Skills, Status, Circumstances, Relation) a los soldados que
-    // controla el jugador (PlayerTroop: en tropa + reserva), de a uno o a toda la tropa, con favoritos y deshacer.
+    // "Characters" tab: add / remove attributes (Skills, Status, Circumstances, Relation) on the soldiers
+    // the player controls (PlayerTroop: in troop + reserves), one at a time or the whole troop, with favorites and undo.
     internal class CharactersPanel
     {
         private class AttrRow
         {
             public CharacterAttribute Attr;
-            public string Label;       // nombre traducido (o el del asset si no tiene)
+            public string Label;       // translated name (or the asset's name if it has none)
             public string Description;
-            public string Category;    // "Skills", "Status", "Circumstances" o "Relation"
-            public bool InGroup;       // forma parte de un grupo (niveles que el juego recalcula solo)
+            public string Category;    // "Skills", "Status", "Circumstances" or "Relation"
+            public bool InGroup;       // belongs to a group (levels the game recalculates by itself)
             public Sprite Icon;
         }
 
@@ -28,7 +28,7 @@ namespace AQT
             public List<KeyValuePair<Character, CharacterAttribute>> OppositesRemoved = new List<KeyValuePair<Character, CharacterAttribute>>();
         }
 
-        // Pares opuestos (no estan en un grupo del juego, asi que los exclusionamos nosotros)
+        // Opposite pairs (they are not in a game group, so we make them mutually exclusive ourselves)
         private static readonly string[][] Opposites = new string[][]
         {
             new string[] { "Strong", "Weak" },
@@ -37,9 +37,9 @@ namespace AQT
             new string[] { "KeenPerception", "PoorPerception" }
         };
 
-        // Categorias de atributos del juego que se pueden editar (el nombre del asset termina en "_<categoria>")
+        // Game attribute categories that can be edited (the asset name ends in "_<category>")
         private static readonly string[] Categories = new string[] { "Skills", "Status", "Circumstances", "Relation" };
-        private const int FavoritesIndex = 4;   // pestana "Favoritos" (atributos de cualquier categoria)
+        private const int FavoritesIndex = 4;   // "Favorites" tab (attributes from any category)
 
         private static string CategoryLabel(int i)
         {
@@ -61,20 +61,20 @@ namespace AQT
         private int _selected;
 
         private HashSet<CharacterAttribute> _has = new HashSet<CharacterAttribute>();
-        private int _cat;   // indice de pestana (0..4)
+        private int _cat;   // tab index (0..4)
         private string _filter = "";
         private bool _onlyOwned;
-        private bool _allMode;          // aplicar a toda la tropa en vez de al soldado elegido
+        private bool _allMode;          // apply to the whole troop instead of the selected soldier
         private float _timer = 99f;
         private Vector2 _charScroll;
         private AttributeManager _am;
         private bool _dirty;
         private readonly List<UndoEntry> _undo = new List<UndoEntry>();
 
-        // IMGUI exige dibujar EXACTAMENTE los mismos controles en el evento Layout y en los siguientes (MouseUp, Repaint...)
-        // de una misma pasada; si no, Unity tira "Getting control N's position in a group with only M controls".
-        // Por eso lo que decide que filas se muestran se congela en el evento Layout (Snapshot) y el resto de la pasada
-        // usa esa copia, aunque el usuario cambie algo a mitad.
+        // IMGUI requires drawing EXACTLY the same controls on the Layout event and the following ones (MouseUp, Repaint...)
+        // of the same pass; otherwise Unity throws "Getting control N's position in a group with only M controls".
+        // So whatever decides which rows are shown is frozen on the Layout event (Snapshot) and the rest of the pass
+        // uses that copy, even if the user changes something midway.
         private bool _vEmpty = true;
         private int _vCat;
         private int _vSelected;
@@ -97,9 +97,9 @@ namespace AQT
             _cfg = cfg;
         }
 
-        // ---- datos -----------------------------------------------------------------------
+        // ---- data -----------------------------------------------------------------------
 
-        // Se llama desde Update (nunca desde OnGUI, para no cambiar controles a mitad del layout).
+        // Called from Update (never from OnGUI, so controls do not change mid-layout).
         public void Refresh(float dt, bool force)
         {
             _timer += dt;
@@ -150,14 +150,14 @@ namespace AQT
                 CharacterAttribute a = am.CharacterAttributes[i];
                 if (a == null || a.Category == null) continue;
 
-                string cat = a.Category.name;           // p. ej. AttributeCategory_4_Skills
+                string cat = a.Category.name;           // e.g. AttributeCategory_4_Skills
                 string kind = null;
                 for (int k = 0; k < Categories.Length; k++)
                 {
                     if (cat.EndsWith("_" + Categories[k], StringComparison.OrdinalIgnoreCase)) { kind = Categories[k]; break; }
                 }
                 if (kind == null) continue;
-                if (a.Icon == null) continue;           // sin icono = interno, el juego no lo muestra
+                if (a.Icon == null) continue;           // no icon = internal, the game does not show it
 
                 AttrRow r = new AttrRow();
                 r.Attr = a;
@@ -179,7 +179,7 @@ namespace AQT
             _built = true;
         }
 
-        // ---- copia estable para IMGUI (se toma en el evento Layout) -----------------------------------
+        // ---- stable copy for IMGUI (taken on the Layout event) -----------------------------------
 
         private void Snapshot()
         {
@@ -219,11 +219,11 @@ namespace AQT
             _vOwned = owned.Count == 0 ? "-" : string.Join(", ", owned.ToArray());
         }
 
-        // ---- interfaz ---------------------------------------------------------------------
+        // ---- interface ---------------------------------------------------------------------
 
         public void Draw()
         {
-            // Se recalcula solo en Layout; Repaint / MouseUp / KeyDown de esa pasada reutilizan la misma copia.
+            // Recomputed only on Layout; Repaint / MouseUp / KeyDown of that pass reuse the same copy.
             if (Event.current.type == EventType.Layout) Snapshot();
 
             if (_vEmpty)
@@ -283,7 +283,7 @@ namespace AQT
 
                 GUILayout.BeginHorizontal();
 
-                // icono del juego (el espacio se reserva siempre; solo se dibuja en Repaint)
+                // game icon (the space is always reserved; it is only drawn on Repaint)
                 Rect ir = GUILayoutUtility.GetRect(px * 1.7f, px * 1.7f, GUILayout.Width(px * 1.7f), GUILayout.Height(px * 1.7f));
                 if (_vIcons && Event.current.type == EventType.Repaint) DrawSprite(ir, r.Icon);
 
@@ -304,17 +304,17 @@ namespace AQT
 
                 GUILayout.EndHorizontal();
             }
-            // La descripcion (tooltip) se muestra en una etiqueta fija debajo de la lista (TrainerBehaviour.DrawWindow):
-            // agregarla solo al pasar el mouse cambiaba la cantidad de controles.
+            // The description (tooltip) is shown in a fixed label below the list (TrainerBehaviour.DrawWindow):
+            // adding it only on hover changed the number of controls.
         }
 
-        // Dibuja un Sprite dentro de un rectangulo conservando la proporcion.
+        // Draws a Sprite inside a rectangle keeping its aspect ratio.
         private static void DrawSprite(Rect r, Sprite s)
         {
             try
             {
                 if (s == null) return;
-                if (s.packed && s.packingMode == SpritePackingMode.Tight) return;   // el rectangulo de textura no sirve con empaquetado "tight"
+                if (s.packed && s.packingMode == SpritePackingMode.Tight) return;   // the texture rectangle is not usable with "tight" packing
                 Texture2D t = s.texture;
                 if (t == null) return;
                 Rect tr = s.textureRect;
@@ -328,11 +328,11 @@ namespace AQT
             }
             catch (Exception)
             {
-                // un icono que no se puede dibujar simplemente se omite
+                // an icon that cannot be drawn is simply skipped
             }
         }
 
-        // ---- acciones --------------------------------------------------------------------
+        // ---- actions --------------------------------------------------------------------
 
         private void ApplyAttribute(AttrRow r, bool add)
         {
@@ -355,7 +355,7 @@ namespace AQT
                     Character c = targets[i];
                     if (add)
                     {
-                        // quitar el opuesto si existe (Fuerte <-> Debil, etc.)
+                        // remove the opposite if it exists (Strong <-> Weak, etc.)
                         if (oa != null && Game.RemoveAttribute(am, c, oa) > 0)
                             u.OppositesRemoved.Add(new KeyValuePair<Character, CharacterAttribute>(c, oa));
                         if (Game.AddAttribute(am, c, r.Attr)) u.Chars.Add(c);
