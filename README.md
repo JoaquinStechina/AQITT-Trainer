@@ -5,15 +5,50 @@ An external trainer for **All Quiet in the Trenches** that does **not** need Bep
 (`GameValueManager`, `SavedCharacterGameValue`, `AttributeManager`, …), so there are no memory addresses that break with every patch.
 Everything disappears when you close the game.
 
-Built for Unity 2022.3 / Mono. Single-player only.
+Built for Unity 2022.3 / Mono. Single-player only. Works on **Windows** and on the **native Linux** build of the game (see [Linux](#linux)).
 
-## Usage
+## Usage (Windows)
 1. Start the game (reaching the main menu is enough).
 2. Run `AQTrainer.exe` (double click). It should print **"Injected OK"**.
 3. Go back to the game window (click it or Alt+Tab). The trainer menu appears.
 4. **F10** or **Insert** shows/hides the menu. **Alt+1..9** toggles your favorite cheats.
 
 The menu is available in **English, Español, Français, Português, Русский and Deutsch** (Settings tab).
+
+## Linux
+
+The game has a native Linux build (Steam, Unity Mono), so the trainer ships a Linux loader that does the same job as the Windows injector:
+it attaches a thread to the game's Mono runtime, loads `AQTAgent.dll` from memory and calls `AQT.Loader.Load()`. The menu and cheats are
+exactly the same as on Windows. macOS is not supported.
+
+Requirements: x86-64 Linux with glibc 2.34 or newer (Ubuntu 22.04+, Debian 12+, Fedora, Arch, SteamOS…). `AQTAgent.dll` must stay in the folder
+above `linux/` (or next to `libaqtloader.so`). The prebuilt `linux/libaqtloader.so` and `linux/aqt-inject` can be rebuilt with `sh linux/build.sh` (needs `gcc`).
+
+### Option A – Steam launch option (recommended, no root)
+In Steam: right-click the game → *Properties* → *Launch Options*, and set:
+
+```
+LD_PRELOAD="/full/path/to/AQTrainer/linux/libaqtloader.so" %command%
+```
+
+Start the game normally. The loader waits (in a background thread) until the game has loaded its scripts and then injects the agent; the
+menu appears a few seconds after the main menu. Steam may print harmless "cannot be preloaded (wrong ELF class)" warnings for its 32-bit helper
+processes. Remove the launch option to play without the trainer.
+
+### Option B – attach to a running game
+```
+sudo ./linux/aqt-inject            # finds the game by name; or: sudo ./linux/aqt-inject <pid>
+```
+`aqt-inject` uses `ptrace` to make the running game `dlopen()` the loader. This needs root, or `ptrace_scope` set to 0
+(`echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope`). If you cannot or do not want that, use Option A. It also assumes the game runs
+on your system's libc (not inside a different container image).
+
+### Linux files and logs
+- Settings: `~/.config/AQTrainer/settings.ini` (or `$XDG_CONFIG_HOME/AQTrainer/settings.ini`).
+- Log (loader and agent): `/tmp/AQTrainer.log` (or `$TMPDIR/AQTrainer.log`). If nothing appears in the game, read this file first.
+- Optional environment variables for the loader: `AQT_AGENT` (full path to `AQTAgent.dll`), `AQT_WAIT_ASSEMBLY` (assembly to wait for, default
+  `Assembly-CSharp`; `-` = inject immediately), `AQT_DELAY_MS` (extra delay after that, default 2000).
+- The loader was tested against a stock Mono runtime with both options. It has **not** been tested with the real Linux build of the game.
 
 ## Features
 
@@ -96,11 +131,12 @@ change back; removing a wound does not by itself change the soldier's health sta
 ### Settings tab
 Trainer language, window opacity, font size, and options (remember active cheats, HUD indicator, hotkeys, attribute icons).
 The window can be resized by dragging its bottom-right corner (`::`); position and size are remembered.
-Settings are stored in `%APPDATA%\AQTrainer\settings.ini` (plain text; safe to edit with the game closed).
+Settings are stored in `%APPDATA%\AQTrainer\settings.ini` on Windows and `~/.config/AQTrainer/settings.ini` on Linux (plain text; safe to edit with the game closed).
 
 **Unload trainer** removes the agent from the game and reverts the invulnerability attributes.
 
 ## Changelog highlights
+- **Linux support** – native Linux loader (`LD_PRELOAD` launch option or `ptrace` attach); same agent and menu.
 - **v6** – new interface: profiles, favorites, search, collapsible sections, hotkeys, HUD indicator, scope/status messages, resizable window,
   opacity and font-size sliders, friendly value names, "apply to whole troop", undo, attribute icons, persistent settings, and six languages.
 - **v5.2** – fixed the IMGUI error *"Getting control N's position in a group with only M controls when doing Repaint"* (the layout changed
@@ -111,18 +147,18 @@ Settings are stored in `%APPDATA%\AQTrainer\settings.ini` (plain text; safe to e
 
 ## Honest technical notes
 - The game could not be run in the development environment: everything is compiled against the real game DLLs (the compiler verifies the
-  API signatures), but injection and the menu are **not fully tested**. If something fails, check the log `%TEMP%\AQTrainer.log` and open an issue with its content.
+  API signatures), but injection and the menu are **not fully tested**. If something fails, check the log (`%TEMP%\AQTrainer.log` on Windows, `/tmp/AQTrainer.log` on Linux) and open an issue with its content.
 - The state cheats (morale, stress, fatigue, wellbeing) are based on reading how the game uses those values and attributes (exact names taken
   from the game data). If one behaves oddly, turn it off. If a name does not exist in your game version, the trainer logs it
   (`Wellbeing: could not find ...`) and skips that part.
 - Back up your saves before trying it. If you save with *Invulnerable* active, the attribute stays in that save until you turn it off.
   The same applies to *Actions always succeed* (the boost stays added to the soldiers until you turn it off or unload the trainer).
-- Windows Defender / SmartScreen may flag `AQTrainer.exe`: this is a typical false positive for any injector (it uses
+- Windows only: Windows Defender / SmartScreen may flag `AQTrainer.exe`: this is a typical false positive for any injector (it uses
   `CreateRemoteThread`/`WriteProcessMemory`). The full source is in this repository so you can review or rebuild it.
 - Intended for single-player campaigns only.
 
 ## Building
-`build.bat` rebuilds both binaries with the .NET Framework compiler that ships with Windows (C# 5):
+On Linux, `sh linux/build.sh` rebuilds the loader (needs `gcc`). On Windows, `build.bat` rebuilds both binaries with the .NET Framework compiler that ships with Windows (C# 5):
 
 ```
 build.bat "H:\SteamLibrary\steamapps\common\All Quiet in the Trenches"
@@ -134,4 +170,6 @@ build.bat "H:\SteamLibrary\steamapps\common\All Quiet in the Trenches"
 | `AQTrainer.exe` | Injector (console). SHA-256: `ec1954fd243c43a7eb6daab7f09acfc9c95065e25225c87e52df495c66f0e75b` |
 | `AQTAgent.dll` | Agent that runs inside the game. SHA-256: `8d6aa2c141fe68386ddcd82f7384a341cfe856d1cbac72079b31d53ec0889382` |
 | `agent/*.cs` | Agent source (menu, settings, cheats, wellbeing, characters, values, translations) |
+| `linux/libaqtloader.so` | Linux loader (loaded with `LD_PRELOAD` or by `aqt-inject`); source in `linux/aqt_loader.c` |
+| `linux/aqt-inject` | Linux attach tool (ptrace); source in `linux/aqt_inject.c`; `linux/build.sh` rebuilds both |
 | `injector/*.cs` | Injector source (adapted from SharpMonoInjector, MIT license in `LICENSE-SharpMonoInjector.txt`) |

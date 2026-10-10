@@ -1,4 +1,7 @@
 * text=auto
 *.bat text eol=crlf
+*.sh text eol=lf
+*.c text eol=lf
 *.dll binary
 *.exe binary
+*.so binary
